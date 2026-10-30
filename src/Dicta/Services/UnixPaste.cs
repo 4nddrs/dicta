@@ -7,6 +7,8 @@ namespace Dicta.Services;
 
 static class UnixPaste
 {
+    private static readonly Encoding Utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
     public static InjectResult Inject(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -181,7 +183,7 @@ static class UnixPaste
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                StandardOutputEncoding = Encoding.UTF8,
+                StandardOutputEncoding = Utf8,
             });
             if (process == null)
                 return null;
@@ -207,10 +209,12 @@ static class UnixPaste
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                StandardInputEncoding = Encoding.UTF8,
+                StandardInputEncoding = Utf8,
             });
             if (process == null)
                 return false;
+            if (text.Length > 0 && text[0] == '\uFEFF')
+                text = text.TrimStart('\uFEFF');
             process.StandardInput.Write(text);
             process.StandardInput.Close();
             return process.WaitForExit(2000) && process.ExitCode == 0;
