@@ -1,12 +1,16 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Dicta.Services;
 
 namespace Dicta;
 
 static class MacPermissions
 {
-    private static int _prompting;
+    private const int BlockIsGlobal = 1 << 28;
+    private const int BlockHasSignature = 1 << 30;
+
+    private static readonly MicGrantBlock MicGrant = OnMicrophoneGrant;
+    private static nint _micBlock;
+    private static Action<bool>? _micDone;
 
     public static bool Ready()
     {
@@ -33,15 +37,26 @@ static class MacPermissions
         }
     }
 
-    public static void AllowMicrophone()
+    public static void AllowMicrophone(Action<bool> completed)
     {
         if (!OperatingSystem.IsMacOS())
+        {
+            completed(true);
+            return;
+        }
+
+        if (MicrophoneAllowed())
+        {
+            completed(true);
+            return;
+        }
+
+        if (RequestMicrophone(completed))
             return;
 
-        if (MicrophoneStatus() == 0)
-            TriggerMicrophonePrompt();
-
+        Log.Error("Couldn't show the microphone prompt.");
         OpenPrivacy("Privacy_Microphone");
+        completed(false);
     }
 
     public static void AllowAccessibility()
@@ -136,28 +151,72 @@ static class MacPermissions
         }
     }
 
-    private static void TriggerMicrophonePrompt()
+    private static bool RequestMicrophone(Action<bool> completed)
     {
-        if (Interlocked.Exchange(ref _prompting, 1) == 1)
-            return;
-
-        Task.Run(() =>
+        try
         {
-            try
+            var device = objc_getClass("AVCaptureDevice");
+            var selector = sel_registerName("requestAccessForMediaType:completionHandler:");
+            var media = AudioMediaType();
+            var block = MicrophoneBlock();
+            if (device == 0 || selector == 0 || media == 0 || block == 0 || _micDone != null)
+                return false;
+
+            _micDone = granted =>
             {
-                using var mic = new MacMicRecorder();
-                mic.Start();
-                Thread.Sleep(600);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Couldn't request microphone access.", ex);
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _prompting, 0);
-            }
-        });
+                if (!granted && MicrophoneStatus() == 2)
+                    OpenPrivacy("Privacy_Microphone");
+                completed(granted);
+            };
+            Log.Info("Asking macOS for microphone access.");
+            objc_msgSend_void(device, selector, media, block);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Couldn't request microphone access.", ex);
+            return false;
+        }
+    }
+
+    private static void OnMicrophoneGrant(nint block, byte granted)
+    {
+        var done = _micDone;
+        _micDone = null;
+        try
+        {
+            done?.Invoke(granted != 0);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Microphone prompt failed.", ex);
+        }
+    }
+
+    private static nint MicrophoneBlock()
+    {
+        if (_micBlock != 0)
+            return _micBlock;
+
+        var system = dlopen("/usr/lib/libSystem.B.dylib", 1);
+        var isa = dlsym(system, "_NSConcreteGlobalBlock");
+        if (isa == 0)
+            return 0;
+
+        var signature = Marshal.StringToHGlobalAnsi("v12@?0c8");
+        var descriptor = Marshal.AllocHGlobal(24);
+        Marshal.WriteIntPtr(descriptor, 0, 0);
+        Marshal.WriteIntPtr(descriptor, 8, 32);
+        Marshal.WriteIntPtr(descriptor, 16, signature);
+
+        var literal = Marshal.AllocHGlobal(32);
+        Marshal.WriteIntPtr(literal, 0, isa);
+        Marshal.WriteInt32(literal, 8, BlockIsGlobal | BlockHasSignature);
+        Marshal.WriteInt32(literal, 12, 0);
+        Marshal.WriteIntPtr(literal, 16, Marshal.GetFunctionPointerForDelegate(MicGrant));
+        Marshal.WriteIntPtr(literal, 24, descriptor);
+        _micBlock = literal;
+        return _micBlock;
     }
 
     private static nint AudioMediaType()
@@ -177,6 +236,12 @@ static class MacPermissions
 
     [DllImport("libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern nint objc_msgSend_nint(nint receiver, nint selector, nint arg);
+
+    [DllImport("libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_void(nint receiver, nint selector, nint arg1, nint arg2);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void MicGrantBlock(nint block, byte granted);
 
     [DllImport("libSystem.dylib")]
     private static extern nint dlopen(string path, int mode);

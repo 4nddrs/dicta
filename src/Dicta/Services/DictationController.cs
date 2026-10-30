@@ -90,7 +90,14 @@ sealed class DictationController : IDisposable
 
     public void AllowMicrophone()
     {
-        MacPermissions.AllowMicrophone();
+        MacPermissions.AllowMicrophone(_ =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_window.Mode == CardMode.Setup)
+                    ShowSetup();
+            });
+        });
     }
 
     public void AllowAccessibility()

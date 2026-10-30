@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # Folder that contains dicta-osx-arm64.tar.gz and dicta-linux-x64.tar.gz.
-DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.1}"
+DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.2}"
 
 uninstall_dicta() {
   local dest="$HOME/.local/share/dicta"
@@ -142,14 +142,14 @@ if [[ "$OS" == Darwin ]]; then
   APP="$DEST/Dicta.app"
   BIN="$APP/Contents/MacOS"
   rm -rf "$APP"
-  mkdir -p "$BIN/models" "$BIN/runtimes/$NATIVE" "$APP/Contents/Resources"
+  mkdir -p "$BIN/runtimes/$NATIVE" "$DEST/models" "$APP/Contents/Resources"
   cp -f "$PUB/Dicta" "$BIN/Dicta"
   chmod +x "$BIN/Dicta"
   for lib in "$PUB"/libSkiaSharp.* "$PUB"/libHarfBuzzSharp.* "$PUB"/libAvaloniaNative.* "$PUB"/libuiohook.*; do
     [[ -f "$lib" ]] || continue
     cp -f "$lib" "$BIN/"
   done
-  cp -f "$PUB/models/ggml-base.en.bin" "$BIN/models/ggml-base.en.bin"
+  cp -f "$PUB/models/ggml-base.en.bin" "$DEST/models/ggml-base.en.bin"
   cp -f "$PUB/runtimes/$NATIVE/"* "$BIN/runtimes/$NATIVE/"
   cat > "$APP/Contents/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -167,9 +167,9 @@ if [[ "$OS" == Darwin ]]; then
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.1</string>
+  <string>1.0.2</string>
   <key>CFBundleVersion</key>
-  <string>1.0.1</string>
+  <string>1.0.2</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
   <key>LSUIElement</key>
@@ -182,7 +182,7 @@ if [[ "$OS" == Darwin ]]; then
 </plist>
 EOF
   rm -f "$DEST/Dicta" "$DEST"/lib*.dylib
-  rm -rf "$DEST/models" "$DEST/runtimes"
+  rm -rf "$DEST/runtimes"
   xattr -cr "$APP" >/dev/null 2>&1 || true
   if command -v codesign >/dev/null 2>&1; then
     codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true

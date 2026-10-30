@@ -80,7 +80,7 @@ sealed class MacMicRecorder : IAudioCapture
         {
             SampleRate = sampleRate,
             FormatId = 0x6C70636D,
-            FormatFlags = 10,
+            FormatFlags = 12,
             BytesPerPacket = 2,
             FramesPerPacket = 1,
             BytesPerFrame = 2,

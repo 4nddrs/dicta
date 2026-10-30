@@ -89,7 +89,7 @@ public partial class OverlayWindow : Window
         BodyText.IsVisible = false;
         HintText.Text = microphoneAllowed && accessibilityAllowed
             ? "Both are allowed. Click Done."
-            : "Click Allow. Dicta appears in the list after you accept the prompt.";
+            : "Click Allow, then accept the macOS prompt. Dicta is added to the list after that.";
         HintText.IsVisible = true;
         Keys.IsVisible = false;
         Wave.IsVisible = false;
