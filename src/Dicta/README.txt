@@ -37,6 +37,15 @@ On macOS, allow Dicta under Privacy & Security for Microphone and Accessibility.
 On Linux, Wayland needs wtype and wl-clipboard. X11 needs xdotool and xclip.
 Settings and the log are in ~/.local/share/dicta.
 
+Uninstall
+---------
+Quit Dicta, then delete its folder.
+
+On macOS, also remove ~/Library/LaunchAgents/com.dicta.app.plist.
+On Linux, also remove ~/.config/systemd/user/dicta.service.
+On macOS and Linux, delete ~/.local/share/dicta and ~/.local/bin/dicta.
+The full commands are in the project README.md.
+
 Microphone permission
 ---------------------
 Settings > Privacy & security > Microphone
