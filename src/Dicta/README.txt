@@ -39,12 +39,8 @@ Settings and the log are in ~/.local/share/dicta.
 
 Uninstall
 ---------
-Quit Dicta, then delete its folder.
-
-On macOS, also remove ~/Library/LaunchAgents/com.dicta.app.plist.
-On Linux, also remove ~/.config/systemd/user/dicta.service.
-On macOS and Linux, delete ~/.local/share/dicta and ~/.local/bin/dicta.
-The full commands are in the project README.md.
+On macOS and Linux, run: dicta uninstall
+On Windows, quit Dicta from the tray, then delete its folder.
 
 Microphone permission
 ---------------------

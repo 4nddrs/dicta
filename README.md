@@ -49,20 +49,16 @@ Running `dicta` again starts or stops a dictation. The tray menu can also start 
 
 ### macOS and Linux
 
-This stops Dicta, removes the login item, and deletes the app, the model, settings, and the log.
+```bash
+dicta uninstall
+```
+
+That stops Dicta and deletes the app, the model, settings, and the log.
+
+If Dicta was installed before this command existed, use:
 
 ```bash
-if [ "$(uname -s)" = Darwin ]; then
-  launchctl bootout "gui/$(id -u)/com.dicta.app" 2>/dev/null || true
-  rm -f "$HOME/Library/LaunchAgents/com.dicta.app.plist"
-else
-  systemctl --user disable --now dicta.service 2>/dev/null || true
-  rm -f "$HOME/.config/systemd/user/dicta.service"
-  systemctl --user daemon-reload 2>/dev/null || true
-fi
-pkill -f "$HOME/.local/share/dicta/Dicta" 2>/dev/null || true
-rm -f "$HOME/.local/bin/dicta"
-rm -rf "$HOME/.local/share/dicta"
+curl -fsSL https://raw.githubusercontent.com/4nddrs/dicta/main/install.sh | bash -s uninstall
 ```
 
 ### Windows

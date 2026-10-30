@@ -1,10 +1,33 @@
 #!/usr/bin/env bash
-# Others install Dicta with:
+# Install:
 #   curl -fsSL https://raw.githubusercontent.com/4nddrs/dicta/main/install.sh | bash
+# Remove:
+#   dicta uninstall
 set -euo pipefail
 
 # Folder that contains dicta-osx-arm64.tar.gz and dicta-linux-x64.tar.gz.
 DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.0}"
+
+uninstall_dicta() {
+  local dest="$HOME/.local/share/dicta"
+  if [[ "$(uname -s)" == Darwin ]]; then
+    launchctl bootout "gui/$(id -u)/com.dicta.app" >/dev/null 2>&1 || true
+    rm -f "$HOME/Library/LaunchAgents/com.dicta.app.plist"
+  else
+    systemctl --user disable --now dicta.service >/dev/null 2>&1 || true
+    rm -f "$HOME/.config/systemd/user/dicta.service"
+    systemctl --user daemon-reload >/dev/null 2>&1 || true
+  fi
+  pkill -f "$dest/Dicta" >/dev/null 2>&1 || true
+  rm -f "$HOME/.local/bin/dicta"
+  rm -rf "$dest"
+  echo "Dicta has been removed."
+}
+
+if [[ "${1:-}" == "uninstall" ]]; then
+  uninstall_dicta
+  exit 0
+fi
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -128,7 +151,27 @@ elif [[ -n "$ROOT" && -f "$ROOT/src/Dicta/README.txt" ]]; then
 fi
 cp -f "$PUB/models/ggml-base.en.bin" "$DEST/models/ggml-base.en.bin"
 cp -f "$PUB/runtimes/$NATIVE/"* "$DEST/runtimes/$NATIVE/"
-ln -sfn "$DEST/Dicta" "$HOME/.local/bin/dicta"
+cat > "$HOME/.local/bin/dicta" <<'EOF'
+#!/bin/sh
+dest="$HOME/.local/share/dicta"
+if [ "${1:-}" = "uninstall" ]; then
+  if [ "$(uname -s)" = Darwin ]; then
+    launchctl bootout "gui/$(id -u)/com.dicta.app" >/dev/null 2>&1 || true
+    rm -f "$HOME/Library/LaunchAgents/com.dicta.app.plist"
+  else
+    systemctl --user disable --now dicta.service >/dev/null 2>&1 || true
+    rm -f "$HOME/.config/systemd/user/dicta.service"
+    systemctl --user daemon-reload >/dev/null 2>&1 || true
+  fi
+  pkill -f "$dest/Dicta" >/dev/null 2>&1 || true
+  rm -f "$HOME/.local/bin/dicta"
+  rm -rf "$dest"
+  echo "Dicta has been removed."
+  exit 0
+fi
+exec "$dest/Dicta" "$@"
+EOF
+chmod +x "$HOME/.local/bin/dicta"
 
 if [[ "$OS" == Darwin ]]; then
   mkdir -p "$HOME/Library/LaunchAgents"
@@ -176,6 +219,7 @@ echo
 echo "Dicta is installed and running."
 echo "Shortcut: Ctrl + Shift + Space"
 echo "Dictate from a terminal: dicta"
+echo "Remove Dicta: dicta uninstall"
 echo
 if [[ "$OS" == Darwin ]]; then
   echo "The first time, open System Settings > Privacy & Security:"
