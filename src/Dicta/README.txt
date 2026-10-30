@@ -33,7 +33,7 @@ The shortcut is still Ctrl + Shift + Space. Running `dicta` again starts or stop
 
 From this project folder, `bash install.sh` installs the local build instead of downloading one.
 
-On macOS, allow Dicta under Privacy & Security for Microphone and Accessibility.
+On macOS, the first launch opens a checklist. Allow the microphone and Accessibility there.
 On Linux, Wayland needs wtype and wl-clipboard. X11 needs xdotool and xclip.
 Settings and the log are in ~/.local/share/dicta.
 

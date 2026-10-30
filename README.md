@@ -19,10 +19,7 @@ This downloads the build for that computer, installs it under `~/.local`, and st
 - macOS: Apple silicon
 - Linux: 64-bit x86
 
-The first time on macOS, open System Settings, then Privacy & Security:
-
-- Microphone: allow Dicta
-- Accessibility: allow Dicta
+The first time on macOS, Dicta opens a checklist. Allow the microphone and Accessibility. Each button opens that page, and Dicta appears in the list after you accept the prompt.
 
 On Linux, Wayland needs `wtype` and `wl-clipboard`. X11 needs `xdotool` and `xclip`. The microphone uses `parec` (`pulseaudio-utils`) or `arecord` (`alsa-utils`).
 
@@ -67,7 +64,7 @@ Quit Dicta from the tray icon, then delete the folder that contains `Dicta.exe`.
 
 ## Files
 
-On macOS and Linux the app, model, settings, and log are in `~/.local/share/dicta`. The `dicta` command is `~/.local/bin/dicta`.
+On macOS and Linux the app, model, settings, and log are in `~/.local/share/dicta`. On macOS the program itself is `Dicta.app` inside that folder. The `dicta` command is `~/.local/bin/dicta`.
 
 On Windows these files sit next to `Dicta.exe`:
 

@@ -13,6 +13,7 @@ sealed class DictationController : IDisposable
     private readonly Transcriber _transcriber = new();
     private readonly SettingsStore _settings = new();
     private readonly DispatcherTimer _clock;
+    private readonly DispatcherTimer _permissionClock;
     private IAudioCapture? _mic;
     private Phase _phase = Phase.Idle;
     private int _generation;
@@ -30,6 +31,14 @@ sealed class DictationController : IDisposable
         _window = window;
         _clock = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _clock.Tick += (_, _) => OnClock();
+        _permissionClock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _permissionClock.Tick += (_, _) =>
+        {
+            if (_window.Mode == CardMode.Setup)
+                _window.ShowSetup(MacPermissions.MicrophoneAllowed(), MacPermissions.AccessibilityAllowed());
+            else
+                _permissionClock.Stop();
+        };
         _transcriber.Progress += OnModelProgress;
     }
 
@@ -42,7 +51,9 @@ sealed class DictationController : IDisposable
         _settings.Load();
         _hotkeyOk = HotkeyService.Start();
         HotkeyService.Pressed += OnHotkey;
-        if (!_settings.WelcomeDismissed || !_hotkeyOk)
+        if (OperatingSystem.IsMacOS() && !MacPermissions.Ready())
+            ShowSetup();
+        else if (!_settings.WelcomeDismissed || !_hotkeyOk)
             ShowHelp();
 
         _ = PrepareQuietlyAsync();
@@ -61,12 +72,30 @@ sealed class DictationController : IDisposable
                 : "The shortcut isn't available. Dictate from the tray, or run dicta in a terminal.";
         else if (!_transcriber.ModelExists)
             warning = "The first launch downloads the English model, about 140 MB. Internet is only needed that once.";
-        else if (!_settings.WelcomeDismissed && OperatingSystem.IsMacOS())
-            warning = "Allow Dicta in Privacy & Security for Microphone and Accessibility.";
         else if (!_settings.WelcomeDismissed && UnixPaste.SetupHint() is { } hint)
             warning = hint;
 
         _window.ShowHelp(body, warning);
+    }
+
+    public void ShowSetup()
+    {
+        if (_phase != Phase.Idle)
+            return;
+
+        _window.ShowSetup(MacPermissions.MicrophoneAllowed(), MacPermissions.AccessibilityAllowed());
+        if (!_permissionClock.IsEnabled)
+            _permissionClock.Start();
+    }
+
+    public void AllowMicrophone()
+    {
+        MacPermissions.AllowMicrophone();
+    }
+
+    public void AllowAccessibility()
+    {
+        MacPermissions.AllowAccessibility();
     }
 
     public void ToggleFromTray()
@@ -83,6 +112,16 @@ sealed class DictationController : IDisposable
                 _settings.WelcomeDismissed = true;
                 _settings.Save();
                 _window.HideCard();
+                break;
+            case CardMode.Setup:
+                ShowSetup();
+                if (MacPermissions.Ready())
+                {
+                    _permissionClock.Stop();
+                    _settings.WelcomeDismissed = true;
+                    _settings.Save();
+                    _window.HideCard();
+                }
                 break;
             case CardMode.Listening:
                 Finish(insert: true);
@@ -117,6 +156,7 @@ sealed class DictationController : IDisposable
         _generation++;
         _insertCts?.Cancel();
         _clock.Stop();
+        _permissionClock.Stop();
         HotkeyService.Pressed -= OnHotkey;
         _mic?.Dispose();
         _transcriber.Dispose();

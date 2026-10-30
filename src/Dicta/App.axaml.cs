@@ -30,11 +30,12 @@ public partial class App : Application
             _controller = new DictationController(_window);
             _window.PrimaryClicked += (_, _) => _controller.OnPrimary();
             _window.SecondaryClicked += (_, _) => _controller.OnSecondary();
+            _window.MicrophoneClicked += (_, _) => _controller.AllowMicrophone();
+            _window.AccessibilityClicked += (_, _) => _controller.AllowAccessibility();
             _window.Dismissed += (_, _) => _controller.OnDismiss();
 
             SetupTray(desktop);
             _controller.Start();
-            MacPermissions.PromptAccessibility();
 
             if (!OperatingSystem.IsWindows())
             {
@@ -84,6 +85,13 @@ public partial class App : Application
         var help = new NativeMenuItem("How it works");
         help.Click += (_, _) => _controller?.ShowHelp();
 
+        NativeMenuItem? permissions = null;
+        if (OperatingSystem.IsMacOS())
+        {
+            permissions = new NativeMenuItem("Permissions");
+            permissions.Click += (_, _) => _controller?.ShowSetup();
+        }
+
         var quit = new NativeMenuItem("Quit");
         quit.Click += (_, _) =>
         {
@@ -95,6 +103,8 @@ public partial class App : Application
         var menu = new NativeMenu();
         menu.Items.Add(dictate);
         menu.Items.Add(help);
+        if (permissions != null)
+            menu.Items.Add(permissions);
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(quit);
 

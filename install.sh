@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # Folder that contains dicta-osx-arm64.tar.gz and dicta-linux-x64.tar.gz.
-DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.0}"
+DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.1}"
 
 uninstall_dicta() {
   local dest="$HOME/.local/share/dicta"
@@ -128,7 +128,7 @@ if [[ ! -d "$PUB/runtimes/$NATIVE" ]]; then
 fi
 
 DEST="$HOME/.local/share/dicta"
-mkdir -p "$DEST/models" "$DEST/runtimes/$NATIVE" "$HOME/.local/bin"
+mkdir -p "$DEST" "$HOME/.local/bin"
 
 if [[ "$OS" == Darwin ]]; then
   launchctl bootout "gui/$(id -u)/com.dicta.app" >/dev/null 2>&1 || true
@@ -138,22 +138,82 @@ fi
 pkill -f "$DEST/Dicta" >/dev/null 2>&1 || true
 sleep 0.2
 
-cp -f "$PUB/Dicta" "$DEST/Dicta"
-chmod +x "$DEST/Dicta"
-for lib in "$PUB"/libSkiaSharp.* "$PUB"/libHarfBuzzSharp.* "$PUB"/libAvaloniaNative.* "$PUB"/libuiohook.*; do
-  [[ -f "$lib" ]] || continue
-  cp -f "$lib" "$DEST/"
-done
+if [[ "$OS" == Darwin ]]; then
+  APP="$DEST/Dicta.app"
+  BIN="$APP/Contents/MacOS"
+  rm -rf "$APP"
+  mkdir -p "$BIN/models" "$BIN/runtimes/$NATIVE" "$APP/Contents/Resources"
+  cp -f "$PUB/Dicta" "$BIN/Dicta"
+  chmod +x "$BIN/Dicta"
+  for lib in "$PUB"/libSkiaSharp.* "$PUB"/libHarfBuzzSharp.* "$PUB"/libAvaloniaNative.* "$PUB"/libuiohook.*; do
+    [[ -f "$lib" ]] || continue
+    cp -f "$lib" "$BIN/"
+  done
+  cp -f "$PUB/models/ggml-base.en.bin" "$BIN/models/ggml-base.en.bin"
+  cp -f "$PUB/runtimes/$NATIVE/"* "$BIN/runtimes/$NATIVE/"
+  cat > "$APP/Contents/Info.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Dicta</string>
+  <key>CFBundleDisplayName</key>
+  <string>Dicta</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.dicta.app</string>
+  <key>CFBundleExecutable</key>
+  <string>Dicta</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.1</string>
+  <key>CFBundleVersion</key>
+  <string>1.0.1</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>12.0</string>
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Dicta uses the microphone to transcribe English and type it where the cursor is.</string>
+</dict>
+</plist>
+EOF
+  rm -f "$DEST/Dicta" "$DEST"/lib*.dylib
+  rm -rf "$DEST/models" "$DEST/runtimes"
+  xattr -cr "$APP" >/dev/null 2>&1 || true
+  if command -v codesign >/dev/null 2>&1; then
+    codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+  fi
+  TARGET="$BIN/Dicta"
+else
+  mkdir -p "$DEST/models" "$DEST/runtimes/$NATIVE"
+  cp -f "$PUB/Dicta" "$DEST/Dicta"
+  chmod +x "$DEST/Dicta"
+  for lib in "$PUB"/libSkiaSharp.* "$PUB"/libHarfBuzzSharp.* "$PUB"/libAvaloniaNative.* "$PUB"/libuiohook.*; do
+    [[ -f "$lib" ]] || continue
+    cp -f "$lib" "$DEST/"
+  done
+  cp -f "$PUB/models/ggml-base.en.bin" "$DEST/models/ggml-base.en.bin"
+  cp -f "$PUB/runtimes/$NATIVE/"* "$DEST/runtimes/$NATIVE/"
+  TARGET="$DEST/Dicta"
+fi
+
 if [[ -f "$PUB/README.txt" ]]; then
   cp -f "$PUB/README.txt" "$DEST/README.txt"
 elif [[ -n "$ROOT" && -f "$ROOT/src/Dicta/README.txt" ]]; then
   cp -f "$ROOT/src/Dicta/README.txt" "$DEST/README.txt"
 fi
-cp -f "$PUB/models/ggml-base.en.bin" "$DEST/models/ggml-base.en.bin"
-cp -f "$PUB/runtimes/$NATIVE/"* "$DEST/runtimes/$NATIVE/"
 cat > "$HOME/.local/bin/dicta" <<'EOF'
 #!/bin/sh
 dest="$HOME/.local/share/dicta"
+if [ "$(uname -s)" = Darwin ] && [ -x "$dest/Dicta.app/Contents/MacOS/Dicta" ]; then
+  bin="$dest/Dicta.app/Contents/MacOS/Dicta"
+else
+  bin="$dest/Dicta"
+fi
 if [ "${1:-}" = "uninstall" ]; then
   if [ "$(uname -s)" = Darwin ]; then
     launchctl bootout "gui/$(id -u)/com.dicta.app" >/dev/null 2>&1 || true
@@ -169,7 +229,7 @@ if [ "${1:-}" = "uninstall" ]; then
   echo "Dicta has been removed."
   exit 0
 fi
-exec "$dest/Dicta" "$@"
+exec "$bin" "$@"
 EOF
 chmod +x "$HOME/.local/bin/dicta"
 
@@ -184,7 +244,7 @@ if [[ "$OS" == Darwin ]]; then
   <string>com.dicta.app</string>
   <key>ProgramArguments</key>
   <array>
-    <string>$DEST/Dicta</string>
+    <string>$TARGET</string>
   </array>
   <key>RunAtLoad</key>
   <true/>
@@ -201,7 +261,7 @@ else
 Description=Dicta
 
 [Service]
-ExecStart=$DEST/Dicta
+ExecStart=$TARGET
 Restart=on-failure
 
 [Install]
@@ -211,7 +271,7 @@ EOF
     systemctl --user daemon-reload
     systemctl --user enable --now dicta.service
   else
-    nohup "$DEST/Dicta" >/dev/null 2>&1 &
+    nohup "$TARGET" >/dev/null 2>&1 &
   fi
 fi
 
@@ -222,9 +282,8 @@ echo "Dictate from a terminal: dicta"
 echo "Remove Dicta: dicta uninstall"
 echo
 if [[ "$OS" == Darwin ]]; then
-  echo "The first time, open System Settings > Privacy & Security:"
-  echo "  - Microphone: allow Dicta"
-  echo "  - Accessibility: allow Dicta"
+  echo "The first time, Dicta opens a checklist."
+  echo "Allow the microphone and Accessibility. Each button opens that page."
   echo
 fi
 if [[ "$OS" == Linux ]]; then

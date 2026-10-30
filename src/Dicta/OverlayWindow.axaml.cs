@@ -11,6 +11,7 @@ public enum CardMode
 {
     Hidden,
     Help,
+    Setup,
     Listening,
     Working,
     Message,
@@ -30,6 +31,8 @@ public partial class OverlayWindow : Window
         Background = Brushes.Transparent;
         PrimaryButton.Click += (_, _) => PrimaryClicked?.Invoke(this, EventArgs.Empty);
         SecondaryButton.Click += (_, _) => SecondaryClicked?.Invoke(this, EventArgs.Empty);
+        MicButton.Click += (_, _) => MicrophoneClicked?.Invoke(this, EventArgs.Empty);
+        AccessButton.Click += (_, _) => AccessibilityClicked?.Invoke(this, EventArgs.Empty);
         SizeChanged += (_, _) => Place();
 
         _pulse = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(70) };
@@ -43,6 +46,8 @@ public partial class OverlayWindow : Window
 
     public event EventHandler? PrimaryClicked;
     public event EventHandler? SecondaryClicked;
+    public event EventHandler? MicrophoneClicked;
+    public event EventHandler? AccessibilityClicked;
     public event EventHandler? Dismissed;
 
     public void ShowHelp(string body, string? warning)
@@ -60,6 +65,7 @@ public partial class OverlayWindow : Window
         HintText.Text = warning ?? "Hiding this card leaves Dicta running.";
         HintText.IsVisible = true;
         Keys.IsVisible = true;
+        SetupList.IsVisible = false;
         Wave.IsVisible = false;
         ButtonRow.IsVisible = true;
         PrimaryButton.Content = "Got it";
@@ -67,6 +73,37 @@ public partial class OverlayWindow : Window
         SecondaryButton.IsVisible = false;
         SetProgress(100);
         Present();
+    }
+
+    public void ShowSetup(bool microphoneAllowed, bool accessibilityAllowed)
+    {
+        var already = Mode == CardMode.Setup;
+        CancelHide();
+        Mode = CardMode.Setup;
+        TitleText.Text = "Allow Dicta";
+        SubtitleText.Text = "Two switches in System Settings";
+        SubtitleText.IsVisible = true;
+        BadgeText.Text = "EN";
+        StatusDot.Fill = BrushOf("#6E62F6");
+        StatusDot.Opacity = 1;
+        BodyText.IsVisible = false;
+        HintText.Text = microphoneAllowed && accessibilityAllowed
+            ? "Both are allowed. Click Done."
+            : "Click Allow. Dicta appears in the list after you accept the prompt.";
+        HintText.IsVisible = true;
+        Keys.IsVisible = false;
+        Wave.IsVisible = false;
+        Progress.IsVisible = false;
+        SetupList.IsVisible = true;
+        SetPermissionRow(MicState, MicButton, microphoneAllowed);
+        SetPermissionRow(AccessState, AccessButton, accessibilityAllowed);
+        ButtonRow.IsVisible = true;
+        PrimaryButton.Content = "Done";
+        PrimaryButton.IsVisible = true;
+        SecondaryButton.Content = "Not now";
+        SecondaryButton.IsVisible = true;
+        if (!already)
+            Present();
     }
 
     public void ShowListening()
@@ -82,11 +119,13 @@ public partial class OverlayWindow : Window
         SubtitleText.IsVisible = false;
         HintText.IsVisible = false;
         Keys.IsVisible = false;
+        SetupList.IsVisible = false;
         Wave.IsVisible = true;
         Wave.Reset();
         ButtonRow.IsVisible = true;
         PrimaryButton.Content = "Insert";
         PrimaryButton.IsVisible = true;
+        SecondaryButton.Content = "Cancel";
         SecondaryButton.IsVisible = true;
         Progress.IsVisible = false;
         Present();
@@ -115,6 +154,7 @@ public partial class OverlayWindow : Window
         BodyText.IsVisible = false;
         HintText.IsVisible = false;
         Keys.IsVisible = false;
+        SetupList.IsVisible = false;
         Wave.IsVisible = false;
         ButtonRow.IsVisible = false;
         Progress.IsVisible = true;
@@ -140,6 +180,7 @@ public partial class OverlayWindow : Window
         HintText.Text = hint ?? "";
         HintText.IsVisible = !string.IsNullOrWhiteSpace(hint);
         Keys.IsVisible = false;
+        SetupList.IsVisible = false;
         Wave.IsVisible = false;
         Progress.IsVisible = false;
         ButtonRow.IsVisible = stick;
@@ -263,6 +304,13 @@ public partial class OverlayWindow : Window
     {
         _hide?.Cancel();
         _hide = null;
+    }
+
+    private static void SetPermissionRow(TextBlock state, Button button, bool allowed)
+    {
+        state.Text = allowed ? "Allowed" : "Needed";
+        state.Foreground = BrushOf(allowed ? "#3DDC97" : "#FF8A96");
+        button.Content = allowed ? "Open" : "Allow";
     }
 
     private static SolidColorBrush BrushOf(string hex) => new(Color.Parse(hex));

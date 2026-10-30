@@ -33,7 +33,7 @@ sealed class MacMicRecorder : IAudioCapture
             CloseQueue();
         }
 
-        return "Allow Dicta in System Settings > Privacy & Security > Microphone, then try again.";
+        return "Open Dicta in the menu bar, choose Permissions, and allow the microphone. Then try again.";
     }
 
     public void Stop()

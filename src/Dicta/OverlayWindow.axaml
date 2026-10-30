@@ -3,7 +3,7 @@
         xmlns:controls="using:Dicta.Controls"
         x:Class="Dicta.OverlayWindow"
         Title="Dicta"
-        Width="360"
+        Width="400"
         SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="Manual"
@@ -92,6 +92,23 @@
                    FontSize="12"
                    LineHeight="17"
                    Foreground="#8E8EA2" />
+
+        <StackPanel x:Name="SetupList" IsVisible="False" Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="1" VerticalAlignment="Center">
+              <TextBlock Text="Microphone" FontSize="13" FontWeight="SemiBold" Foreground="#F7F7FB" />
+              <TextBlock x:Name="MicState" Text="Needed" FontSize="12" Foreground="#FF8A96" />
+            </StackPanel>
+            <Button x:Name="MicButton" Classes="ghost" Grid.Column="1" Content="Allow" MinWidth="76" />
+          </Grid>
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="1" VerticalAlignment="Center">
+              <TextBlock Text="Accessibility" FontSize="13" FontWeight="SemiBold" Foreground="#F7F7FB" />
+              <TextBlock x:Name="AccessState" Text="Needed" FontSize="12" Foreground="#FF8A96" />
+            </StackPanel>
+            <Button x:Name="AccessButton" Classes="ghost" Grid.Column="1" Content="Allow" MinWidth="76" />
+          </Grid>
+        </StackPanel>
 
         <StackPanel x:Name="Keys" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
           <Border Classes="key"><TextBlock Text="Ctrl" /></Border>
