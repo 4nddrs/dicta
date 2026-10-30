@@ -75,7 +75,7 @@ public partial class OverlayWindow : Window
         Present();
     }
 
-    public void ShowSetup(bool microphoneAllowed, bool accessibilityAllowed)
+    public void ShowSetup(bool microphoneAllowed, bool accessibilityAllowed, bool restartAccessibility = false)
     {
         var already = Mode == CardMode.Setup;
         CancelHide();
@@ -89,7 +89,9 @@ public partial class OverlayWindow : Window
         BodyText.IsVisible = false;
         HintText.Text = microphoneAllowed && accessibilityAllowed
             ? "Both are allowed. Click Done."
-            : "Click Allow, then accept the macOS prompt. Dicta is added to the list after that.";
+            : restartAccessibility
+                ? "Turn Dicta on in Accessibility, then click Restart."
+                : "Turn Dicta on in Accessibility so the text can be pasted. Then click Restart.";
         HintText.IsVisible = true;
         Keys.IsVisible = false;
         Wave.IsVisible = false;
@@ -97,6 +99,8 @@ public partial class OverlayWindow : Window
         SetupList.IsVisible = true;
         SetPermissionRow(MicState, MicButton, microphoneAllowed);
         SetPermissionRow(AccessState, AccessButton, accessibilityAllowed);
+        if (!accessibilityAllowed && restartAccessibility)
+            AccessButton.Content = "Restart";
         ButtonRow.IsVisible = true;
         PrimaryButton.Content = "Done";
         PrimaryButton.IsVisible = true;

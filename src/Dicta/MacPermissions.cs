@@ -259,6 +259,7 @@ static class MacPermissions
     private static extern void CFRelease(nint value);
 
     [DllImport("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")]
+    [return: MarshalAs(UnmanagedType.U1)]
     private static extern bool AXIsProcessTrusted();
 
     [DllImport("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")]

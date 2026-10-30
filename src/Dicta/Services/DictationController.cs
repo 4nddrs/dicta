@@ -14,7 +14,7 @@ sealed class DictationController : IDisposable
     private readonly SettingsStore _settings = new();
     private readonly DispatcherTimer _clock;
     private readonly DispatcherTimer _permissionClock;
-    private int _readingPermissions;
+    private bool _accessibilityPrompted;
     private IAudioCapture? _mic;
     private Phase _phase = Phase.Idle;
     private int _generation;
@@ -89,44 +89,21 @@ sealed class DictationController : IDisposable
 
     private void RefreshPermissions(bool closeWhenReady)
     {
-        if (Interlocked.CompareExchange(ref _readingPermissions, 1, 0) != 0)
+        if (_phase != Phase.Idle || !Dispatcher.UIThread.CheckAccess())
             return;
 
-        Task.Run(() =>
-        {
-            var microphone = false;
-            var accessibility = false;
-            try
-            {
-                microphone = MacPermissions.MicrophoneAllowed();
-                accessibility = MacPermissions.AccessibilityAllowed();
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Couldn't read macOS permissions.", ex);
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _readingPermissions, 0);
-            }
+        var microphone = MacPermissions.MicrophoneAllowed();
+        var accessibility = MacPermissions.AccessibilityAllowed();
+        _window.ShowSetup(microphone, accessibility, _accessibilityPrompted && !accessibility);
+        if (!_permissionClock.IsEnabled)
+            _permissionClock.Start();
+        if (!closeWhenReady || !microphone || !accessibility)
+            return;
 
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (_phase != Phase.Idle)
-                    return;
-
-                _window.ShowSetup(microphone, accessibility);
-                if (!_permissionClock.IsEnabled)
-                    _permissionClock.Start();
-                if (!closeWhenReady || !microphone || !accessibility)
-                    return;
-
-                _permissionClock.Stop();
-                _settings.WelcomeDismissed = true;
-                _settings.Save();
-                _window.HideCard();
-            });
-        });
+        _permissionClock.Stop();
+        _settings.WelcomeDismissed = true;
+        _settings.Save();
+        _window.HideCard();
     }
 
     public void AllowMicrophone()
@@ -143,7 +120,23 @@ sealed class DictationController : IDisposable
 
     public void AllowAccessibility()
     {
+        if (MacPermissions.AccessibilityAllowed())
+        {
+            MacPermissions.OpenPrivacy("Privacy_Accessibility");
+            return;
+        }
+
+        if (_accessibilityPrompted)
+        {
+            Log.Info("Restarting so macOS can apply Accessibility.");
+            Environment.Exit(0);
+            return;
+        }
+
+        _accessibilityPrompted = true;
         MacPermissions.AllowAccessibility();
+        if (_window.Mode == CardMode.Setup)
+            _window.ShowSetup(MacPermissions.MicrophoneAllowed(), false, restartAccessibility: true);
     }
 
     public void ToggleFromTray()
@@ -378,8 +371,10 @@ sealed class DictationController : IDisposable
                 case InjectResult.Inserted:
                     break;
                 case InjectResult.Copied:
-                    var paste = OperatingSystem.IsMacOS() ? "Command + V" : "Ctrl + V";
-                _window.ShowMessage("Copied", text, "Couldn't focus that window. Paste with " + paste + ".", stick: true);
+                    var hint = OperatingSystem.IsMacOS()
+                        ? "The text is copied. Turn on Accessibility for Dicta, click Restart, or paste with Command + V."
+                        : "Couldn't focus that window. Paste with Ctrl + V.";
+                    _window.ShowMessage("Copied", text, hint, stick: true);
                     break;
                 default:
                     _window.ShowMessage("Couldn't type it", text, "Copy the text and paste it into the field.", stick: true);

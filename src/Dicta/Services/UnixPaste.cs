@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Avalonia.Threading;
 
 namespace Dicta.Services;
 
@@ -11,13 +12,10 @@ static class UnixPaste
         if (string.IsNullOrWhiteSpace(text))
             return InjectResult.Failed;
 
-        Thread.Sleep(120);
+        Thread.Sleep(OperatingSystem.IsMacOS() ? 280 : 120);
         var previous = ReadClipboard();
         if (!WriteClipboard(text))
             return InjectResult.Failed;
-
-        if (OperatingSystem.IsMacOS() && !AccessibilityTrusted())
-            return InjectResult.Copied;
 
         if (!TryPaste())
             return InjectResult.Copied;
@@ -57,12 +55,50 @@ static class UnixPaste
 
     private static bool PasteMac()
     {
+        if (AccessibilityTrusted())
+        {
+            PostCommandV();
+            return true;
+        }
+
+        return PasteViaSystemEvents();
+    }
+
+    private static void PostCommandV()
+    {
         const ushort keyV = 0x09;
         const ulong command = 0x100000;
         PostKey(keyV, true, command);
         Thread.Sleep(20);
         PostKey(keyV, false, command);
-        return true;
+    }
+
+    private static bool PasteViaSystemEvents()
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "osascript",
+                ArgumentList = { "-e", "tell application \"System Events\" to keystroke \"v\" using command down" },
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+            if (process == null || !process.WaitForExit(20000))
+                return false;
+            if (process.ExitCode == 0)
+                return true;
+
+            var error = process.StandardError.ReadToEnd();
+            Log.Error("Couldn't paste into the focused app. " + error.Trim());
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Couldn't paste into the focused app.", ex);
+            return false;
+        }
     }
 
     private static void PostKey(ushort key, bool down, ulong flags)
@@ -79,7 +115,12 @@ static class UnixPaste
     {
         try
         {
-            return AXIsProcessTrusted();
+            if (Dispatcher.UIThread.CheckAccess())
+                return AXIsProcessTrusted();
+
+            var pending = Dispatcher.UIThread.InvokeAsync(AXIsProcessTrusted);
+            pending.Wait(TimeSpan.FromSeconds(1));
+            return pending.Status == DispatcherOperationStatus.Completed && pending.Result;
         }
         catch
         {
@@ -231,5 +272,6 @@ static class UnixPaste
     private static extern void CFRelease(nint value);
 
     [DllImport("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")]
+    [return: MarshalAs(UnmanagedType.U1)]
     private static extern bool AXIsProcessTrusted();
 }

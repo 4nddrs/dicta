@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # Folder that contains dicta-osx-arm64.tar.gz and dicta-linux-x64.tar.gz.
-DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.3}"
+DICTA_BASE_URL="${DICTA_BASE_URL:-https://github.com/4nddrs/dicta/releases/download/v1.0.4}"
 
 uninstall_dicta() {
   local dest="$HOME/.local/share/dicta"
@@ -167,9 +167,9 @@ if [[ "$OS" == Darwin ]]; then
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.3</string>
+  <string>1.0.4</string>
   <key>CFBundleVersion</key>
-  <string>1.0.3</string>
+  <string>1.0.4</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
   <key>LSUIElement</key>
@@ -187,6 +187,7 @@ EOF
   if command -v codesign >/dev/null 2>&1; then
     codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
   fi
+  tccutil reset Accessibility com.dicta.app >/dev/null 2>&1 || true
   TARGET="$BIN/Dicta"
 else
   mkdir -p "$DEST/models" "$DEST/runtimes/$NATIVE"
