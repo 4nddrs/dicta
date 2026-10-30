@@ -80,25 +80,25 @@ public partial class App : Application
         }
 
         var dictate = new NativeMenuItem("Dictate now");
-        dictate.Click += (_, _) => _controller?.ToggleFromTray();
+        dictate.Click += (_, _) => Defer(() => _controller?.ToggleFromTray());
 
         var help = new NativeMenuItem("How it works");
-        help.Click += (_, _) => _controller?.ShowHelp();
+        help.Click += (_, _) => Defer(() => _controller?.ShowHelp());
 
         NativeMenuItem? permissions = null;
         if (OperatingSystem.IsMacOS())
         {
             permissions = new NativeMenuItem("Permissions");
-            permissions.Click += (_, _) => _controller?.ShowSetup();
+            permissions.Click += (_, _) => Defer(() => _controller?.ShowSetup());
         }
 
         var quit = new NativeMenuItem("Quit");
-        quit.Click += (_, _) =>
+        quit.Click += (_, _) => Defer(() =>
         {
             _window!.AllowClose = true;
             _controller?.Dispose();
             desktop.Shutdown();
-        };
+        });
 
         var menu = new NativeMenu();
         menu.Items.Add(dictate);
@@ -114,9 +114,14 @@ public partial class App : Application
             ToolTipText = "Dicta  ·  " + Shortcut.Label,
             Menu = menu,
         };
-        _tray.Clicked += (_, _) => _controller?.ShowHelp();
+        _tray.Clicked += (_, _) => Defer(() => _controller?.ShowHelp());
 
         TrayIcon.SetIcons(this, new TrayIcons { _tray });
+    }
+
+    private static void Defer(Action action)
+    {
+        Dispatcher.UIThread.Post(action, DispatcherPriority.Background);
     }
 
     private void ShutdownApp()

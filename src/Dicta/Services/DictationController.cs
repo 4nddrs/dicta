@@ -14,6 +14,7 @@ sealed class DictationController : IDisposable
     private readonly SettingsStore _settings = new();
     private readonly DispatcherTimer _clock;
     private readonly DispatcherTimer _permissionClock;
+    private int _readingPermissions;
     private IAudioCapture? _mic;
     private Phase _phase = Phase.Idle;
     private int _generation;
@@ -31,11 +32,11 @@ sealed class DictationController : IDisposable
         _window = window;
         _clock = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _clock.Tick += (_, _) => OnClock();
-        _permissionClock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _permissionClock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _permissionClock.Tick += (_, _) =>
         {
             if (_window.Mode == CardMode.Setup)
-                _window.ShowSetup(MacPermissions.MicrophoneAllowed(), MacPermissions.AccessibilityAllowed());
+                RefreshPermissions(closeWhenReady: false);
             else
                 _permissionClock.Stop();
         };
@@ -83,9 +84,49 @@ sealed class DictationController : IDisposable
         if (_phase != Phase.Idle)
             return;
 
-        _window.ShowSetup(MacPermissions.MicrophoneAllowed(), MacPermissions.AccessibilityAllowed());
-        if (!_permissionClock.IsEnabled)
-            _permissionClock.Start();
+        RefreshPermissions(closeWhenReady: false);
+    }
+
+    private void RefreshPermissions(bool closeWhenReady)
+    {
+        if (Interlocked.CompareExchange(ref _readingPermissions, 1, 0) != 0)
+            return;
+
+        Task.Run(() =>
+        {
+            var microphone = false;
+            var accessibility = false;
+            try
+            {
+                microphone = MacPermissions.MicrophoneAllowed();
+                accessibility = MacPermissions.AccessibilityAllowed();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Couldn't read macOS permissions.", ex);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _readingPermissions, 0);
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_phase != Phase.Idle)
+                    return;
+
+                _window.ShowSetup(microphone, accessibility);
+                if (!_permissionClock.IsEnabled)
+                    _permissionClock.Start();
+                if (!closeWhenReady || !microphone || !accessibility)
+                    return;
+
+                _permissionClock.Stop();
+                _settings.WelcomeDismissed = true;
+                _settings.Save();
+                _window.HideCard();
+            });
+        });
     }
 
     public void AllowMicrophone()
@@ -121,14 +162,7 @@ sealed class DictationController : IDisposable
                 _window.HideCard();
                 break;
             case CardMode.Setup:
-                ShowSetup();
-                if (MacPermissions.Ready())
-                {
-                    _permissionClock.Stop();
-                    _settings.WelcomeDismissed = true;
-                    _settings.Save();
-                    _window.HideCard();
-                }
+                RefreshPermissions(closeWhenReady: true);
                 break;
             case CardMode.Listening:
                 Finish(insert: true);
