@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ] && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+  uid=$(id -u "$SUDO_USER")
+  runtime="/run/user/$uid"
+  if [ -d "$runtime" ]; then
+    sudo -u "$SUDO_USER" env XDG_RUNTIME_DIR="$runtime" systemctl --user daemon-reload || true
+    sudo -u "$SUDO_USER" env XDG_RUNTIME_DIR="$runtime" systemctl --user enable --now dicta.service || true
+  fi
+fi
+
+exit 0

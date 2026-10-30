@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "upgrade" ]; then
+  if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+    uid=$(id -u "$SUDO_USER")
+    runtime="/run/user/$uid"
+    if [ -d "$runtime" ]; then
+      sudo -u "$SUDO_USER" env XDG_RUNTIME_DIR="$runtime" systemctl --user disable --now dicta.service || true
+    fi
+  fi
+fi
+
+exit 0

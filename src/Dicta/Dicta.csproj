@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dicta</RootNamespace>
+    <AssemblyName>Dicta</AssemblyName>
+    <Version>1.0.0</Version>
+    <Product>Dicta</Product>
+    <Description>English dictation at the cursor.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="Whisper.net" Version="1.9.1" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+    <PackageReference Include="SharpHook" Version="5.3.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Dicta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Native\*.dll" Condition="'$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64'">
+      <Link>runtimes\win-x64\%(Filename)%(Extension)</Link>
+      <TargetPath>runtimes\win-x64\%(Filename)%(Extension)</TargetPath>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\icon.png" />
+    <Content Include="README.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <Target Name="StageWindowsWhisper" AfterTargets="Publish" Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <PropertyGroup>
+      <_WhisperNative>$([MSBuild]::EnsureTrailingSlash($(NuGetPackageRoot)))whisper.net.runtime/1.9.1/build/win-x64/</_WhisperNative>
+    </PropertyGroup>
+    <ItemGroup>
+      <_WhisperDlls Include="$(_WhisperNative)*.dll" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(_WhisperNative)whisper.dll')" Text="whisper.dll was not found in $(_WhisperNative)" />
+    <Copy SourceFiles="@(_WhisperDlls)" DestinationFolder="$(PublishDir)runtimes/win-x64/" SkipUnchangedFiles="true" />
+    <Delete Files="$(PublishDir)ggml-metal.metal" />
+  </Target>
+
+  <Target Name="StageUnixWhisper" AfterTargets="Publish" Condition="'$(RuntimeIdentifier)' != '' And '$(RuntimeIdentifier)' != 'win-x64'">
+    <PropertyGroup>
+      <_WhisperRid Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">macos-arm64</_WhisperRid>
+      <_WhisperRid Condition="'$(RuntimeIdentifier)' == 'osx-x64'">macos-x64</_WhisperRid>
+      <_WhisperRid Condition="'$(RuntimeIdentifier)' == 'linux-x64'">linux-x64</_WhisperRid>
+      <_WhisperRid Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">linux-arm64</_WhisperRid>
+      <_WhisperNative>$([MSBuild]::EnsureTrailingSlash($(NuGetPackageRoot)))whisper.net.runtime/1.9.1/build/$(_WhisperRid)/</_WhisperNative>
+    </PropertyGroup>
+    <ItemGroup>
+      <_WhisperNativeFiles Include="$(_WhisperNative)*" Condition="'$(_WhisperRid)' != ''" />
+    </ItemGroup>
+    <Error Condition="'$(_WhisperRid)' != '' And !Exists('$(_WhisperNative)')" Text="Whisper natives were not found in $(_WhisperNative)" />
+    <Copy SourceFiles="@(_WhisperNativeFiles)" DestinationFolder="$(PublishDir)runtimes/$(_WhisperRid)/" SkipUnchangedFiles="true" />
+    <Delete Files="$(PublishDir)ggml-metal.metal" />
+    <ItemGroup>
+      <_DesktopNative Include="$(TargetDir)libSkiaSharp.*" />
+      <_DesktopNative Include="$(TargetDir)libHarfBuzzSharp.*" />
+      <_DesktopNative Include="$(TargetDir)libAvaloniaNative.*" />
+      <_DesktopNative Include="$(TargetDir)libuiohook.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_DesktopNative)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

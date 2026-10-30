@@ -1,0 +1,9 @@
+[Unit]
+Description=Dicta
+
+[Service]
+ExecStart=/usr/lib/dicta/Dicta
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

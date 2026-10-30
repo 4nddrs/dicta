@@ -1,0 +1,12 @@
+bin/
+obj/
+dist/
+.dotnet/
+.cache/
+.DS_Store
+__pycache__/
+*.user
+dicta.log
+dicta-settings.json
+packaging/*.deb
+packaging/release/*.tar.gz

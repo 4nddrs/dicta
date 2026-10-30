@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+  uid=$(id -u "$SUDO_USER")
+  runtime="/run/user/$uid"
+  if [ -d "$runtime" ]; then
+    sudo -u "$SUDO_USER" env XDG_RUNTIME_DIR="$runtime" systemctl --user daemon-reload || true
+  fi
+fi
+
+exit 0
