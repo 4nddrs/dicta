@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dicta</RootNamespace>
     <AssemblyName>Dicta</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.0.6</Version>
     <Product>Dicta</Product>
     <Description>English dictation at the cursor.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
