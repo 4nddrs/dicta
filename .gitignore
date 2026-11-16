@@ -10,3 +10,6 @@ dicta.log
 dicta-settings.json
 packaging/*.deb
 packaging/release/*.tar.gz
+
+# Never commit API keys
+.env

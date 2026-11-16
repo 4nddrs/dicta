@@ -26,6 +26,10 @@ rm -rf \
   "$ROOT/dist/runtimes/macos-x64" \
   "$ROOT/dist/ggml-metal.metal"
 
+# A settings file here would carry the OpenAI key next to the exe, and this
+# folder is what gets copied to other people. Never ship it.
+rm -f "$ROOT/dist/dicta-settings.json" "$ROOT/dist/dicta.log"
+
 MODEL="$ROOT/dist/models/ggml-base.en.bin"
 mkdir -p "$ROOT/dist/models"
 if [[ -f "$ROOT/.cache/ggml-base.en.bin" ]]; then
