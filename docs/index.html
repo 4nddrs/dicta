@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dicta — speak, pause, it's typed where the cursor is</title>
+<meta name="description" content="Dictation for macOS, Linux and Windows that types into whatever field has focus. Runs on your computer, or on OpenAI when you paste a key.">
+<meta name="theme-color" content="#0C0D14">
+<meta property="og:title" content="Dicta — dictation at the cursor">
+<meta property="og:description" content="Press the shortcut, speak English, pause. The text lands in the field you were already in. Offline by default, OpenAI optional.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top">
+    <img src="icon.png" alt="" width="22" height="22">
+    <span>Dicta</span>
+  </a>
+  <nav aria-label="Sections">
+    <a href="#problem">Accuracy</a>
+    <a href="#how">How it works</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#install">Install</a>
+    <a class="nav-gh" href="https://github.com/4nddrs/dicta">GitHub</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <p class="eyebrow">Dictation at the cursor, not in a chat box</p>
+    <h1>Speak. Pause. It&rsquo;s typed.</h1>
+    <p class="lede">
+      Dicta turns speech into text in whatever field already has focus — your editor,
+      your mail client, a ticket. No window to switch to, no text to copy across.
+    </p>
+
+    <div class="install">
+      <code id="cmd">curl -fsSL https://raw.githubusercontent.com/4nddrs/dicta/main/install.sh | bash</code>
+      <button type="button" data-copy="cmd" aria-live="polite">Copy</button>
+    </div>
+
+    <p class="meta">macOS on Apple silicon &middot; Linux on x86-64 &middot; Windows portable</p>
+    <p class="meta strong">Works offline. OpenAI is optional.</p>
+  </section>
+
+  <section class="shot" aria-label="How Dicta looks while listening">
+    <div class="desk">
+      <div class="field">
+        <span class="typed">Please send the quarterly report to the finance team before tomorrow morning, and copy Sarah.</span><span class="caret"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="dot"></span>
+          <span class="card-title">Listening</span>
+          <span class="card-badge">0:03</span>
+        </div>
+        <div class="wave" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="card-actions">
+          <span class="btn primary">Insert</span>
+          <span class="btn ghost">Cancel</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="problem">
+    <h2>The model on your computer is small on purpose</h2>
+    <p class="section-lede">
+      Dicta ships with a 140&nbsp;MB English model so it works with no network and no account.
+      It is fast and it is private. On a laptop microphone, in a café, or with an accent it does
+      not recognise, it drops words.
+    </p>
+    <p class="section-lede">
+      Paste an OpenAI key and Dicta uses a much larger model instead. Same shortcut, same card,
+      better text. Clear the field and it goes back to the one on your computer.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Transcription models Dicta can use, by accuracy and price</caption>
+        <thead>
+          <tr><th scope="col">Model</th><th scope="col">Word error rate</th><th scope="col">Price</th><th scope="col">Needs internet</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Bundled model</th>
+            <td>Fast, free, drops words on noisy audio</td>
+            <td>—</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <th scope="row">gpt-transcribe</th>
+            <td>~3.3%</td>
+            <td>$0.0045 / min</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">gpt-4o-transcribe</th>
+            <td>~4.0%</td>
+            <td>$0.006 / min</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">gpt-4o-mini-transcribe</th>
+            <td>~4.5%</td>
+            <td>$0.003 / min</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fineprint">
+      Error rates are third-party measurements (AA-WER v2), not ours. Dictating twenty minutes a
+      day costs about two dollars a month at the top row. Dicta picks the best model your key can
+      actually reach, so a restricted OpenAI project still works.
+    </p>
+  </section>
+
+  <section id="how">
+    <h2>Three steps, one shortcut</h2>
+    <ol class="steps">
+      <li>
+        <span class="step-n">1</span>
+        <h3>Click the field</h3>
+        <p>Whatever you were already typing in. Dicta remembers where the cursor was, even if you switch windows.</p>
+      </li>
+      <li>
+        <span class="step-n">2</span>
+        <h3>Press the shortcut and speak</h3>
+        <p>A small card appears at the bottom of the screen, with the waveform and a timer.</p>
+        <p class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd></p>
+      </li>
+      <li>
+        <span class="step-n">3</span>
+        <h3>Pause for two seconds</h3>
+        <p>Or press the shortcut again. The text is typed into the field and the card closes.</p>
+        <p class="hint">One <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the whole dictation.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="features">
+    <h2>What it does</h2>
+    <div class="grid">
+      <article>
+        <h3>Types where the cursor is</h3>
+        <p>No clipboard dance. If the window cannot take keystrokes, Dicta copies the text and says so.</p>
+      </article>
+      <article>
+        <h3>Stops when you stop</h3>
+        <p>Two seconds of silence ends the recording. Ninety seconds is the ceiling, so a stuck microphone cannot run forever.</p>
+      </article>
+      <article>
+        <h3>Follows your key</h3>
+        <p>Model access differs per OpenAI project. Dicta asks once per start which model the key can use, and never locks itself onto a fallback.</p>
+      </article>
+      <article>
+        <h3>Honest error messages</h3>
+        <p>A bad key, a project without access to a model, and a permission problem are three different messages, because they are three different fixes.</p>
+      </article>
+      <article>
+        <h3>Undo is your friend</h3>
+        <p>The text arrives as ordinary typing, so the field&rsquo;s own undo removes it in one step.</p>
+      </article>
+      <article>
+        <h3>Small and quiet</h3>
+        <p>A tray icon, a hotkey, no window. It does not steal focus while you dictate.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <h2>Where your audio goes</h2>
+    <div class="split">
+      <div>
+        <h3>Without a key</h3>
+        <p>
+          Nothing leaves the computer. The only network request Dicta makes is the one-time
+          download of the English model on the first launch.
+        </p>
+      </div>
+      <div>
+        <h3>With a key</h3>
+        <p>
+          Each recording is uploaded to OpenAI for transcription. OpenAI&rsquo;s API terms say API
+          data is not used for training; retention for abuse monitoring is described in their data
+          policy. The recording is not stored by Dicta.
+        </p>
+      </div>
+    </div>
+    <ul class="checks">
+      <li>The key lives in <code>dicta-settings.json</code> on your own disk.</li>
+      <li>On macOS and Linux that file is readable only by your user account.</li>
+      <li>The key is never written to the log. Neither is anything the provider echoes back.</li>
+      <li>No account, no analytics, no telemetry.</li>
+    </ul>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+
+    <h3>macOS and Linux</h3>
+    <p>One command. It downloads the build for your computer, installs it under <code>~/.local</code>, and starts it.</p>
+    <div class="install">
+      <code id="cmd2">curl -fsSL https://raw.githubusercontent.com/4nddrs/dicta/main/install.sh | bash</code>
+      <button type="button" data-copy="cmd2" aria-live="polite">Copy</button>
+    </div>
+    <p class="fineprint">
+      Running it again upgrades in place and keeps your settings, including the key.
+      On Linux, Wayland needs <code>wtype</code> and <code>wl-clipboard</code>; X11 needs <code>xdotool</code> and <code>xclip</code>.
+      The microphone uses <code>parec</code> or <code>arecord</code>.
+    </p>
+
+    <h3>Windows</h3>
+    <p>
+      Download the folder from the latest release and copy it whole to the PC — not only
+      <code>Dicta.exe</code>. Put it somewhere your user account can write, such as
+      <code>%LOCALAPPDATA%\Dicta</code>. The model, the tray icon and the settings file live beside the exe.
+    </p>
+    <p class="fineprint">Windows 10 or 11, 64-bit. Allow microphone access for desktop apps.</p>
+
+    <h3>Better accuracy</h3>
+    <p>
+      Open the tray icon, choose <strong>OpenAI key…</strong>, paste the key, and click
+      <strong>Save</strong>. To go back to the local model, clear the field and save.
+    </p>
+
+    <h3>Uninstall</h3>
+    <div class="install">
+      <code id="cmd3">dicta uninstall</code>
+      <button type="button" data-copy="cmd3" aria-live="polite">Copy</button>
+    </div>
+    <p class="fineprint">That stops Dicta and deletes the app, the model, the settings and the log. On Windows, quit from the tray and delete the folder.</p>
+  </section>
+
+  <section id="faq">
+    <h2>Questions</h2>
+    <details>
+      <summary>Does it need an OpenAI key?</summary>
+      <p>No. Without a key it transcribes on your computer and works offline. The key only improves accuracy.</p>
+    </details>
+    <details>
+      <summary>What does it cost?</summary>
+      <p>Dicta is free to run locally. With a key you pay OpenAI per minute of audio — around two dollars a month for twenty minutes a day.</p>
+    </details>
+    <details>
+      <summary>Which languages does it handle?</summary>
+      <p>It is built for English. With the bundled model that is all it does. With an OpenAI key the model can handle more, but the app is tuned and documented for English.</p>
+    </details>
+    <details>
+      <summary>Why did my key get rejected?</summary>
+      <p>A key that authenticates can still lack access to a model, and the project behind the key is what grants it. Dicta tells those two failures apart so you fix the right one.</p>
+    </details>
+    <details>
+      <summary>Can two people share one key?</summary>
+      <p>Technically yes, and small teams do it. Each person pastes it once into their own install.</p>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://github.com/4nddrs/dicta">Source</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://github.com/4nddrs/dicta/releases/latest">Releases</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://github.com/4nddrs/dicta/issues">Issues</a>
+  </p>
+  <p class="fineprint">Dicta types English into the field that has focus. Built for people who would rather speak.</p>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (button) {
+  button.addEventListener('click', async function () {
+    var target = document.getElementById(button.dataset.copy);
+    if (!target) return;
+    var text = target.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      var range = document.createRange();
+      range.selectNodeContents(target);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+    button.textContent = 'Copied';
+    button.dataset.state = 'done';
+    setTimeout(function () {
+      button.textContent = 'Copy';
+      delete button.dataset.state;
+    }, 1600);
+  });
+});
+</script>
+
+</body>
+</html>

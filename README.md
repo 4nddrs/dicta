@@ -2,6 +2,8 @@
 
 Dicta dictates English and types it where the cursor is.
 
+Site: https://4nddrs.github.io/dicta/
+
 By default the voice model runs on your computer, so Dicta works without the internet. Paste an OpenAI key from the tray menu and Dicta sends each recording to OpenAI instead: the words come out right more often.
 
 ## Install
@@ -49,7 +51,7 @@ The bundled model is small and misses words on a noisy microphone. Add an OpenAI
 1. Open the tray icon and choose **OpenAI key…**.
 2. Paste the key and click **Save**.
 
-Dicta then transcribes with the best OpenAI model the key can use: `gpt-transcribe` when the project has it, otherwise `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`. The computer needs the internet while dictating. The recording is uploaded to OpenAI and is not kept. The key is stored in `dicta-settings.json`: on macOS and Linux only your user account can read it, and on Windows it sits in the folder next to `Dicta.exe`. Clear the field and save to go back to the model on the computer.
+Dicta then transcribes with the best OpenAI model the key can use: `gpt-transcribe` when the project has it, otherwise `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`. The computer needs the internet while dictating. Each recording is uploaded to OpenAI; their API terms say API data is not used for training, and retention for abuse monitoring is described in their data policy. The key is stored in `dicta-settings.json`: on macOS and Linux only your user account can read it, and on Windows it sits in the folder next to `Dicta.exe`. Clear the field and save to go back to the model on the computer.
 
 ## Uninstall
 
