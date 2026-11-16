@@ -15,6 +15,7 @@ public enum CardMode
     Listening,
     Working,
     Message,
+    Key,
 }
 
 public partial class OverlayWindow : Window
@@ -33,6 +34,13 @@ public partial class OverlayWindow : Window
         SecondaryButton.Click += (_, _) => SecondaryClicked?.Invoke(this, EventArgs.Empty);
         MicButton.Click += (_, _) => MicrophoneClicked?.Invoke(this, EventArgs.Empty);
         AccessButton.Click += (_, _) => AccessibilityClicked?.Invoke(this, EventArgs.Empty);
+        KeyBox.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Enter)
+                return;
+            PrimaryClicked?.Invoke(this, EventArgs.Empty);
+            e.Handled = true;
+        };
         SizeChanged += (_, _) => Place();
 
         _pulse = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(70) };
@@ -43,6 +51,10 @@ public partial class OverlayWindow : Window
     public CardMode Mode { get; private set; } = CardMode.Hidden;
 
     public bool AllowClose { get; set; }
+
+    public string ApiKeyText => KeyBox.Text ?? "";
+
+    public void ClearApiKeyInput() => KeyBox.Text = "";
 
     public event EventHandler? PrimaryClicked;
     public event EventHandler? SecondaryClicked;
@@ -71,6 +83,7 @@ public partial class OverlayWindow : Window
         PrimaryButton.Content = "Got it";
         PrimaryButton.IsVisible = true;
         SecondaryButton.IsVisible = false;
+        KeyBox.IsVisible = false;
         SetProgress(100);
         Present();
     }
@@ -99,6 +112,7 @@ public partial class OverlayWindow : Window
         SetupList.IsVisible = true;
         SetPermissionRow(MicState, MicButton, microphoneAllowed);
         SetPermissionRow(AccessState, AccessButton, accessibilityAllowed);
+        KeyBox.IsVisible = false;
         if (!accessibilityAllowed && restartAccessibility)
             AccessButton.Content = "Restart";
         ButtonRow.IsVisible = true;
@@ -131,6 +145,7 @@ public partial class OverlayWindow : Window
         PrimaryButton.IsVisible = true;
         SecondaryButton.Content = "Cancel";
         SecondaryButton.IsVisible = true;
+        KeyBox.IsVisible = false;
         Progress.IsVisible = false;
         Present();
     }
@@ -161,6 +176,7 @@ public partial class OverlayWindow : Window
         SetupList.IsVisible = false;
         Wave.IsVisible = false;
         ButtonRow.IsVisible = false;
+        KeyBox.IsVisible = false;
         Progress.IsVisible = true;
         Progress.IsIndeterminate = busy || percent == null;
         if (percent != null)
@@ -187,6 +203,7 @@ public partial class OverlayWindow : Window
         SetupList.IsVisible = false;
         Wave.IsVisible = false;
         Progress.IsVisible = false;
+        KeyBox.IsVisible = false;
         ButtonRow.IsVisible = stick;
         PrimaryButton.Content = "Close";
         PrimaryButton.IsVisible = stick;
@@ -194,6 +211,38 @@ public partial class OverlayWindow : Window
         Present();
         if (!stick)
             ArmHide(title == "Done" ? TimeSpan.FromMilliseconds(1400) : TimeSpan.FromMilliseconds(2600));
+    }
+
+    public void ShowApiKey(string? savedKey, string? hint)
+    {
+        CancelHide();
+        Mode = CardMode.Key;
+        TitleText.Text = "OpenAI key";
+        SubtitleText.Text = "Stored only on this computer";
+        SubtitleText.IsVisible = true;
+        BadgeText.Text = "EN";
+        StatusDot.Fill = BrushOf("#6E62F6");
+        StatusDot.Opacity = 1;
+        BodyText.IsVisible = false;
+        HintText.Text = hint ?? "";
+        HintText.IsVisible = !string.IsNullOrWhiteSpace(hint);
+        Keys.IsVisible = false;
+        SetupList.IsVisible = false;
+        Wave.IsVisible = false;
+        Progress.IsVisible = false;
+        KeyBox.IsVisible = true;
+        KeyBox.Text = savedKey ?? "";
+        ButtonRow.IsVisible = true;
+        PrimaryButton.Content = "Save";
+        PrimaryButton.IsVisible = true;
+        SecondaryButton.Content = "Cancel";
+        SecondaryButton.IsVisible = true;
+        Present(activate: true);
+        Dispatcher.UIThread.Post(() =>
+        {
+            KeyBox.Focus();
+            KeyBox.SelectAll();
+        }, DispatcherPriority.Background);
     }
 
     public void SetProgress(double value)
@@ -216,6 +265,8 @@ public partial class OverlayWindow : Window
     public void HideCard()
     {
         CancelHide();
+        if (Mode == CardMode.Key)
+            KeyBox.Text = "";
         Mode = CardMode.Hidden;
         if (IsVisible)
             Hide();
@@ -250,11 +301,13 @@ public partial class OverlayWindow : Window
         base.OnClosing(e);
     }
 
-    private void Present()
+    private void Present(bool activate = false)
     {
-        ShowActivated = false;
+        ShowActivated = activate;
         if (!IsVisible)
             Show();
+        if (activate)
+            Activate();
         Dispatcher.UIThread.Post(Place, DispatcherPriority.Background);
     }
 

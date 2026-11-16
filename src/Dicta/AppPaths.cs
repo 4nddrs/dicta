@@ -6,6 +6,10 @@ static class AppPaths
     {
         get
         {
+            var custom = Environment.GetEnvironmentVariable("DICTA_STATE_DIR");
+            if (!string.IsNullOrWhiteSpace(custom))
+                return custom;
+
             if (OperatingSystem.IsWindows())
                 return AppContext.BaseDirectory;
 

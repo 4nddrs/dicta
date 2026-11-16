@@ -2,7 +2,7 @@
 
 Dicta dictates English and types it where the cursor is.
 
-The voice model runs on your computer. After Dicta is installed, it does not need the internet. Press the shortcut, speak English, pause, and the text is pasted into the field that had the cursor.
+By default the voice model runs on your computer, so Dicta works without the internet. Paste an OpenAI key from the tray menu and Dicta sends each recording to OpenAI instead: the words come out right more often.
 
 ## Install
 
@@ -41,6 +41,15 @@ Allow microphone access for desktop apps under Settings, Privacy & security, Mic
 The text is pasted into that window, and the listening card closes. Ctrl+Z (Command+Z on macOS) usually undoes the whole dictation.
 
 Running `dicta` again starts or stops a dictation. The tray menu can also start dictation, show this help, or quit.
+
+## Better accuracy
+
+The bundled model is small and misses words on a noisy microphone. Add an OpenAI key to use a better model:
+
+1. Open the tray icon and choose **OpenAI key…**.
+2. Paste the key and click **Save**.
+
+Dicta then transcribes with the best OpenAI model the key can use: `gpt-transcribe` when the project has it, otherwise `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`. The computer needs the internet while dictating. The recording is uploaded to OpenAI and is not kept. The key is stored in `dicta-settings.json`: on macOS and Linux only your user account can read it, and on Windows it sits in the folder next to `Dicta.exe`. Clear the field and save to go back to the model on the computer.
 
 ## Uninstall
 

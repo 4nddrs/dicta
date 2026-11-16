@@ -55,6 +55,17 @@
       <Setter Property="FontSize" Value="12" />
       <Setter Property="FontWeight" Value="Medium" />
     </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="#14FFFFFF" />
+      <Setter Property="Foreground" Value="#F7F7FB" />
+      <Setter Property="BorderBrush" Value="#2AFFFFFF" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="CaretBrush" Value="#8B7CFF" />
+      <Setter Property="SelectionBrush" Value="#6E62F6" />
+    </Style>
   </Window.Styles>
 
   <Border Margin="10" CornerRadius="18" BoxShadow="0 12 32 0 #55000000">
@@ -92,6 +103,11 @@
                    FontSize="12"
                    LineHeight="17"
                    Foreground="#8E8EA2" />
+
+        <TextBox x:Name="KeyBox"
+                 IsVisible="False"
+                 PasswordChar="•"
+                 Watermark="sk-..." />
 
         <StackPanel x:Name="SetupList" IsVisible="False" Spacing="8">
           <Grid ColumnDefinitions="*,Auto">

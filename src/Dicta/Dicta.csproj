@@ -31,6 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Dicta.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Native\*.dll" Condition="'$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64'">
       <Link>runtimes\win-x64\%(Filename)%(Extension)</Link>
       <TargetPath>runtimes\win-x64\%(Filename)%(Extension)</TargetPath>

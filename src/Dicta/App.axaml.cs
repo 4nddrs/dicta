@@ -85,6 +85,9 @@ public partial class App : Application
         var help = new NativeMenuItem("How it works");
         help.Click += (_, _) => Defer(() => _controller?.ShowHelp());
 
+        var apiKey = new NativeMenuItem("OpenAI key…");
+        apiKey.Click += (_, _) => Defer(() => _controller?.ShowApiKey());
+
         NativeMenuItem? permissions = null;
         if (OperatingSystem.IsMacOS())
         {
@@ -103,6 +106,7 @@ public partial class App : Application
         var menu = new NativeMenu();
         menu.Items.Add(dictate);
         menu.Items.Add(help);
+        menu.Items.Add(apiKey);
         if (permissions != null)
             menu.Items.Add(permissions);
         menu.Items.Add(new NativeMenuItemSeparator());

@@ -14,6 +14,17 @@ How to use
 
 The text is pasted into that window. Ctrl+Z usually undoes the whole dictation.
 
+Better accuracy
+---------------
+The model in the models folder is small. For more accurate text, add an OpenAI key:
+open the tray menu, choose "OpenAI key...", paste the key, and click Save.
+
+Dicta then sends each recording to OpenAI and needs the internet while dictating.
+It uses the best model the key can reach: gpt-transcribe when the OpenAI project
+has it, otherwise gpt-4o-transcribe or gpt-4o-mini-transcribe.
+The key is stored in dicta-settings.json next to this file. Clear the field and
+save to go back to the model on this computer.
+
 Requirements
 ------------
 - Windows 10 or 11, 64-bit, or macOS, or Linux
@@ -21,6 +32,7 @@ Requirements
 - A CPU with AVX2 (typical on computers from the last several years)
 
 On Windows, copy this whole folder, not just the exe. The model and libraries sit beside it.
+If the folder also holds other platforms, the files Windows needs are Dicta.exe, models, runtimes, and this file.
 
 macOS and Linux
 ---------------
